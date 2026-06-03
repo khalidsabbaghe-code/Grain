@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grain App — AI Humanizer with Psychology</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Clash+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --accent: #ec4899;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #94a3b8;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1a3e 100%);
+      color: var(--text-primary);
+      overflow-x: hidden;
+    }
+    
+    #app { min-height: 100vh; }
+    
+    @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+    
+    /* Navigation */
+    nav {
+      background: rgba(15, 23, 42, 0.8);
+      border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+    }
+    
+    .nav-brand {
+      font-size: 20px;
+      font-weight: 800;
+      font-family: 'Clash Display';
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    
+    .nav-stat {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    .nav-stat .value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    .badge { background: var(--success); color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    
+    button {
+      background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+    
+    button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    /* Layout */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      margin-top: 80px;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+      padding-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .tab {
+      background: transparent;
+      border: none;
+      color: var(--text-tertiary);
+      padding: 0;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .tab.active {
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 1rem;
+      margin-bottom: -1rem;
+    }
+    
+    /* Main Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .card {
+      background: linear-gradient(135deg, rgba(51, 65, 85, 0.3) 0%, rgba(30, 41, 59, 0.3) 100%);
+      border: 1px solid rgba(100, 116, 139, 0.2);
+      padding: 2rem;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+    
+    /* Input Area */
+    .input-section h3 {
+      font-family: 'Clash Display';
+      font-size: 20px;
+      margin-bottom: 1.5rem;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 200px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(100, 116, 139, 0.3);
+      color: var(--text-primary);
+      padding: 1rem;
+      border-radius: 12px;
+      font-family: 'Monaco', monospace;
+      font-size: 13px;
+      resize: none;
+      transition: all 0.3s;
+      margin-bottom: 1rem;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+    }
+    
+    /* Progress Bars */
+    .progress-bar {
+      height: 6px;
+      background: rgba(100, 116, 139, 0.2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+    
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+      transition: width 0.3s ease;
+    }
+    
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 0.5rem;
+    }
+    
+    /* Output Section */
+    .output-section {
+      margin-top: 2rem;
+    }
+    
+    .output-box {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(100, 116, 139, 0.3);
+      padding: 1.5rem;
+      border-radius: 12px;
+      font-family: 'Monaco', monospace;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .sidebar-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .streak-number {
+      font-size: 48px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    
+    .streak-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    /* Leaderboard */
+    .leaderboard-list {
+      list-style: none;
+    }
+    
+    .leaderboard-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid rgba(100, 116, 139, 0.1);
+      font-size: 13px;
+    }
+    
+    .leaderboard-item:first-child { color: var(--accent); font-weight: 700; }
+    .leaderboard-item:nth-child(2) { color: var(--primary); }
+    .leaderboard-item:nth-child(3) { color: var(--warning); }
+    
+    .leaderboard-rank {
+      font-weight: 700;
+      min-width: 30px;
+    }
+    
+    .leaderboard-value {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    /* Badges */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .badge-item {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(100, 116, 139, 0.2);
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      opacity: 0.4;
+    }
+    
+    .badge-item.unlocked {
+      opacity: 1;
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.1);
+    }
+    
+    .badge-item:hover { transform: scale(1.05); }
+    
+    .badge-icon { font-size: 32px; margin-bottom: 0.5rem; }
+    
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      background: var(--bg-secondary);
+      padding: 2rem;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+    
+    .modal-content h2 {
+      font-family: 'Clash Display';
+      font-size: 24px;
+      margin-bottom: 1rem;
+    }
+    
+    .modal-content p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    /* Success Toast */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--success);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      z-index: 1001;
+      animation: slideUp 0.3s ease;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .grid { grid-template-columns: 1fr; }
+      .badges-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    
+    @media (max-width: 768px) {
+      .container { padding: 1rem; }
+      nav { padding: 1rem; }
+      .tabs { font-size: 12px; }
+      .sidebar { grid-column: 1 / -1; }
+      textarea { height: 150px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const App = () => {
+      const [activeTab, setActiveTab] = useState('humanize');
+      const [plan, setPlan] = useState('free');
+      const [usageToday, setUsageToday] = useState(0);
+      const [dailyStreak, setDailyStreak] = useState(0);
+      const [totalHumanizations, setTotalHumanizations] = useState(0);
+      const [aiText, setAiText] = useState('');
+      const [humanText, setHumanText] = useState('');
+      const [processing, setProcessing] = useState(false);
+      const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+      const [showSuccess, setShowSuccess] = useState(false);
+      const [badges, setBadges] = useState(['first-humanize', 'first-streak']);
+      const [referralCode] = useState('GRAIN' + Math.random().toString(36).substr(2, 6).toUpperCase());
+
+      // Load data
+      useEffect(() => {
+        const saved = localStorage.getItem('grain-user-data');
+        if (saved) {
+          const data = JSON.parse(saved);
+          setPlan(data.plan || 'free');
+          setUsageToday(data.usageToday || 0);
+          setDailyStreak(data.dailyStreak || 0);
+          setTotalHumanizations(data.totalHumanizations || 0);
+          setBadges(data.badges || []);
+        }
+      }, []);
+
+      const saveData = (newPlan, newUsage, newStreak, newTotal, newBadges) => {
+        localStorage.setItem('grain-user-data', JSON.stringify({
+          plan: newPlan,
+          usageToday: newUsage,
+          dailyStreak: newStreak,
+          totalHumanizations: newTotal,
+          badges: newBadges,
+          lastUsedDate: new Date().toISOString()
+        }));
+      };
+
+      const canHumanize = plan === 'pro' || usageToday < 3;
+      const remainingToday = Math.max(0, 3 - usageToday);
+      const wordCount = aiText.split(/\s+/).filter(w => w.length > 0).length;
+      const overLimit = wordCount > 150 && plan === 'free';
+
+      const handleHumanize = async () => {
+        if (!canHumanize || overLimit || aiText.trim().length === 0) return;
+
+        setProcessing(true);
+        const newUsage = usageToday + 1;
+        const newStreak = dailyStreak + (usageToday === 0 ? 1 : 0);
+        const newTotal = totalHumanizations + 1;
+        const newBadges = [...badges];
+
+        // Add badges
+        if (newTotal === 1 && !newBadges.includes('first-humanize')) newBadges.push('first-humanize');
+        if (newStreak === 7 && !newBadges.includes('week-warrior')) newBadges.push('week-warrior');
+        if (newStreak === 30 && !newBadges.includes('monthly-master')) newBadges.push('monthly-master');
+        if (newTotal === 10 && !newBadges.includes('speed-demon')) newBadges.push('speed-demon');
+
+        // Simulate processing
+        await new Promise(resolve => setTimeout(resolve, 1700));
+
+        const humanized = aiText
+          .replace(/undoubtedly/gi, 'definitely')
+          .replace(/thus/gi, 'so')
+          .replace(/facilitate/gi, 'help')
+          .replace(/leverage/gi, 'use')
+          .replace(/synergy/gi, 'teamwork')
+          .replace(/optimal/gi, 'best')
+          .replace(/stakeholders/gi, 'people')
+          .replace(/transformative/gi, 'powerful');
+
+        setHumanText(humanized);
+        setUsageToday(newUsage);
+        setDailyStreak(newStreak);
+        setTotalHumanizations(newTotal);
+        setBadges(newBadges);
+        saveData(plan, newUsage, newStreak, newTotal, newBadges);
+        setProcessing(false);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+      };
+
+      const allBadges = [
+        { id: 'first-humanize', name: 'First Step', icon: '🌟' },
+        { id: 'first-streak', name: 'Streak Started', icon: '🔥' },
+        { id: 'week-warrior', name: 'Week Warrior', icon: '⚡' },
+        { id: 'monthly-master', name: 'Monthly Master', icon: '👑' },
+        { id: 'speed-demon', name: 'Speed Demon', icon: '🚀' },
+        { id: 'grammar-guru', name: 'Grammar Guru', icon: '📚' },
+        { id: 'humanizer-pro', name: 'Humanizer Pro', icon: '💎' },
+      ];
+
+      const leaderboard = [
+        { name: 'Alex Chen', score: 3420, you: false },
+        { name: 'You', score: totalHumanizations, you: true },
+        { name: 'Jordan Lee', score: 2890, you: false },
+        { name: 'Sam Taylor', score: 2340, you: false },
+        { name: 'Morgan Patel', score: 1920, you: false },
+      ].sort((a, b) => b.score - a.score);
+
+      return (
+        <div>
+          {/* Navigation */}
+          <nav>
+            <div className="nav-brand">Grain</div>
+            <div className="nav-right">
+              <div className="nav-stat">
+                🔥 <span className="value">{dailyStreak}</span> Streak
+              </div>
+              <div className="nav-stat">
+                {remainingToday}/{3} Uses Left
+              </div>
+              {plan === 'pro' && <span className="badge">Pro</span>}
+              <button onClick={() => setShowUpgradeModal(true)}>
+                {plan === 'pro' ? 'Manage' : 'Upgrade'}
+              </button>
+            </div>
+          </nav>
+
+          {/* Main Content */}
+          <div className="container">
+            {/* Tabs */}
+            <div className="tabs">
+              <button className={`tab ${activeTab === 'humanize' ? 'active' : ''}`} onClick={() => setActiveTab('humanize')}>
+                ✨ Humanize
+              </button>
+              <button className={`tab ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
+                📊 Stats & Badges
+              </button>
+              <button className={`tab ${activeTab === 'leaderboard' ? 'active' : ''}`} onClick={() => setActiveTab('leaderboard')}>
+                🏆 Leaderboard
+              </button>
+              <button className={`tab ${activeTab === 'referral' ? 'active' : ''}`} onClick={() => setActiveTab('referral')}>
+                🎁 Refer Friends
+              </button>
+            </div>
+
+            {/* Humanize Tab */}
+            {activeTab === 'humanize' && (
+              <div className="grid">
+                <div className="card input-section">
+                  <h3>Paste AI-Generated Text</h3>
+                  <textarea
+                    value={aiText}
+                    onChange={(e) => setAiText(e.target.value)}
+                    placeholder="Paste your AI text here..."
+                  />
+                  <div className="stat-row">
+                    <span>Word count: {wordCount}</span>
+                    {overLimit && <span style={{ color: 'var(--danger)' }}>⚠️ Exceeds limit (150)</span>}
+                  </div>
+                  {plan === 'free' && <div className="progress-bar"><div className="progress-bar-fill" style={{ width: `${Math.min(100, (wordCount / 150) * 100)}%` }}></div></div>}
+                  
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <button 
+                      onClick={handleHumanize}
+                      disabled={!canHumanize || overLimit || aiText.trim().length === 0 || processing}
+                      style={{ width: '100%', padding: '14px' }}
+                    >
+                      {processing ? '⏳ Processing...' : '✨ Humanize Text'}
+                    </button>
+                  </div>
+
+                  {plan === 'free' && (
+                    <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', fontSize: '12px', color: 'var(--danger)' }}>
+                      {remainingToday} free uses remaining today
+                    </div>
+                  )}
+
+                  {humanText && (
+                    <div className="output-section">
+                      <h4 style={{ marginBottom: '0.5rem' }}>✓ Humanized Output</h4>
+                      <div className="output-box">{humanText}</div>
+                      <button style={{ width: '100%' }} onClick={() => { navigator.clipboard.writeText(humanText); alert('Copied!'); }}>
+                        📋 Copy
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sidebar */}
+                <div className="sidebar">
+                  <div className="sidebar-card">
+                    <div className="streak-number">🔥 {dailyStreak}</div>
+                    <div className="streak-label">Day Streak</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '0.5rem' }}>
+                      Keep it going!
+                    </div>
+                  </div>
+
+                  <div className="card" style={{ textAlign: 'center' }}>
+                    <h4 style={{ marginBottom: '1rem' }}>📈 Your Stats</h4>
+                    <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--primary)', marginBottom: '0.5rem' }}>{totalHumanizations}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>Total Humanizations</div>
+                  </div>
+
+                  <div className="card">
+                    <h4 style={{ marginBottom: '1rem' }}>🎯 Next Milestone</h4>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                      {totalHumanizations < 10 ? `${10 - totalHumanizations} humanizations to unlock "Speed Demon"` : '✓ Unlocked!'}
+                    </div>
+                    <div className="progress-bar"><div className="progress-bar-fill" style={{ width: `${Math.min(100, (totalHumanizations / 10) * 100)}%` }}></div></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Stats Tab */}
+            {activeTab === 'stats' && (
+              <div>
+                <h2 style={{ marginBottom: '2rem', fontFamily: 'Clash Display', fontSize: '28px' }}>Your Badges 🏅</h2>
+                <div className="badges-grid">
+                  {allBadges.map(badge => (
+                    <div key={badge.id} className={`badge-item ${badges.includes(badge.id) ? 'unlocked' : ''}`}>
+                      <div className="badge-icon">{badge.icon}</div>
+                      <div style={{ fontSize: '11px' }}>{badge.name}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Leaderboard Tab */}
+            {activeTab === 'leaderboard' && (
+              <div className="card" style={{ maxWidth: '600px' }}>
+                <h2 style={{ marginBottom: '2rem', fontFamily: 'Clash Display', fontSize: '28px' }}>Global Leaderboard 🏆</h2>
+                <ul className="leaderboard-list">
+                  {leaderboard.map((user, idx) => (
+                    <li key={idx} className="leaderboard-item">
+                      <span>
+                        <span className="leaderboard-rank">{idx + 1}. </span>
+                        {user.name} {user.you && '(You)'}
+                      </span>
+                      <span className="leaderboard-value">{user.score}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Referral Tab */}
+            {activeTab === 'referral' && (
+              <div className="card" style={{ maxWidth: '600px' }}>
+                <h2 style={{ marginBottom: '2rem', fontFamily: 'Clash Display', fontSize: '28px' }}>Refer & Earn 🎁</h2>
+                <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '2rem', borderRadius: '12px', marginBottom: '2rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginBottom: '1rem' }}>Your referral code</div>
+                  <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--primary)', fontFamily: 'Monaco', marginBottom: '1rem' }}>
+                    {referralCode}
+                  </div>
+                  <button onClick={() => { navigator.clipboard.writeText(referralCode); alert('Copied!'); }} style={{ width: '100%' }}>
+                    📋 Copy Code
+                  </button>
+                </div>
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.8' }}>
+                  <p><strong>✓ You get:</strong> 5 bonus uses per friend</p>
+                  <p><strong>✓ They get:</strong> 3 free uses</p>
+                  <p><strong>✓ Unlimited:</strong> No cap on referrals</p>
+                  <p style={{ marginTop: '1rem', color: 'var(--text-tertiary)' }}>Share your code with friends and start earning!</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Upgrade Modal */}
+          {showUpgradeModal && (
+            <div className="modal-overlay" onClick={() => setShowUpgradeModal(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <h2>Upgrade to Pro 🚀</h2>
+                <p>Unlock unlimited humanizations, all intensity levels, and advanced features.</p>
+                <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '8px', fontSize: '12px' }}>
+                  <div><strong>$12/month</strong> or <strong>$9/month</strong> (yearly)</div>
+                  <div style={{ marginTop: '0.5rem', color: 'var(--text-tertiary)' }}>Cancel anytime</div>
+                </div>
+                <div className="modal-buttons">
+                  <button style={{ flex: 1 }} onClick={() => { setPlan('pro'); setShowUpgradeModal(false); setShowSuccess(true); }}>
+                    Upgrade Now
+                  </button>
+                  <button style={{ flex: 1, background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)' }} onClick={() => setShowUpgradeModal(false)}>
+                    Maybe Later
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success Toast */}
+          {showSuccess && <div className="toast">✓ Success! Enjoy Grain Pro</div>}
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+  </script>
+</body>
+</html>
